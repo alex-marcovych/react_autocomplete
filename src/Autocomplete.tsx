@@ -1,40 +1,59 @@
 import classNames from 'classnames';
 import { Person } from './types/Person';
 import { peopleFromServer } from './data/people';
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from "react";
 import debounce from 'lodash.debounce';
 
 type Props = {
   setEnteredPerson: (person: Person | null) => void;
   visiblePeople: Person[];
   setVisiblePeople: (array: Person[]) => void;
+  delay?: number;
 };
 
 export const Autocomplete: React.FC<Props> = ({
   setEnteredPerson,
   setVisiblePeople,
   visiblePeople,
+  delay,
 }) => {
   const [inputIsTouched, setInputIsTouched] = useState(false);
   const [query, setQuery] = useState('');
+  const prevQuery = useRef('');
 
-  const handleSearch = debounce((searchQuery: string) => {
-    const filtered: Person[] = peopleFromServer.filter(person =>
-      person.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
+  const handleSearch = useCallback(
+    debounce((searchQuery: string) => {
+      if (searchQuery.trim() === '') {
+        setVisiblePeople(peopleFromServer);
 
-    setVisiblePeople(filtered);
-  }, 300);
+        return;
+      }
+
+      const filtered: Person[] = peopleFromServer.filter(person =>
+        person.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+
+      setVisiblePeople(filtered);
+    }, delay),
+    [delay],
+  );
 
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     event.preventDefault();
+    const newQuery: string = event.target.value;
+
+    if (newQuery === prevQuery.current) {
+      return;
+    }
+
     setInputIsTouched(true);
-    setQuery(event.target.value);
-    handleSearch(event.target.value);
+    setQuery(newQuery);
+    prevQuery.current = newQuery;
+    handleSearch(newQuery);
   };
 
   return (
-    <div className="dropdown is-active">
+    <div className={classNames('dropdown', { 'is-active': inputIsTouched })}>
       <div className="dropdown-trigger">
         <input
           type="text"
@@ -45,10 +64,18 @@ export const Autocomplete: React.FC<Props> = ({
           onChange={handleQueryChange}
           onClick={() => {
             setInputIsTouched(true);
-            setQuery('');
-            setEnteredPerson(null);
+            if (query.trim() === '') {
+              setVisiblePeople(peopleFromServer);
+            }
           }}
           onBlur={() => setInputIsTouched(false)}
+          onFocus={() => {
+            setInputIsTouched(true);
+
+            if (query.trim() === '') {
+              setVisiblePeople(peopleFromServer);
+            }
+          }}
         />
       </div>
       {visiblePeople.length !== 0 && (
@@ -68,7 +95,6 @@ export const Autocomplete: React.FC<Props> = ({
                   setEnteredPerson(person);
                   setInputIsTouched(false);
                   setQuery(person.name);
-                  setVisiblePeople(peopleFromServer);
                 }}
               >
                 <p

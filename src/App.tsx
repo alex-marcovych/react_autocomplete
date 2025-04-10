@@ -21,6 +21,7 @@ export const App: React.FC = () => {
           setEnteredPerson={setEnteredPerson}
           visiblePeople={visiblePeople}
           setVisiblePeople={setVisiblePeople}
+          delay={300}
         />
 
         {visiblePeople.length === 0 && (
