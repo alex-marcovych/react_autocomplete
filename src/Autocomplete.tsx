@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import { Person } from './types/Person';
 import { peopleFromServer } from './data/people';
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from 'react';
 import debounce from 'lodash.debounce';
 
 type Props = {
@@ -25,15 +25,13 @@ export const Autocomplete: React.FC<Props> = ({
     debounce((searchQuery: string) => {
       if (searchQuery.trim() === '') {
         setVisiblePeople(peopleFromServer);
+      } else {
+        const filtered: Person[] = peopleFromServer.filter(person =>
+          person.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
 
-        return;
+        setVisiblePeople(filtered);
       }
-
-      const filtered: Person[] = peopleFromServer.filter(person =>
-        person.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-
-      setVisiblePeople(filtered);
     }, delay),
     [delay],
   );
